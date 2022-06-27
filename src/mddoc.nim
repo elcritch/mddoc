@@ -20,17 +20,18 @@ proc scanNimFile(path: string) =
           if f.extractFilename == module & ".nim":
             scanNimFile(f)
 
-proc genMarkDownFile() =
+proc genMarkDownFile(prefixapi = false) =
   var md = ""
   var i = 0
   for doc in docs:
     if i == 0:
-      md.add "# API: " & doc["nimble"].getStr() & "\n"
-      md.add "\n```nim\n"
-      md.add "import " & doc["nimble"].getStr() & "\n"
-      md.add "```\n"
-      md.add "\n"
-      if "description" in doc and doc["moduleDescription"].getStr() != "":
+      if prefixapi:
+        md.add "# API: " & doc["nimble"].getStr() & "\n"
+        md.add "\n```nim\n"
+        md.add "import " & doc["nimble"].getStr() & "\n"
+        md.add "```\n"
+        md.add "\n"
+      if "moduleDescription" in doc and doc["moduleDescription"].getStr() != "":
         md.add doc["moduleDescription"].getStr()
         md.add "\n"
 
@@ -79,9 +80,14 @@ proc genMarkDownFile() =
     readme = readme[0 ..< loc] & md
   writeFile("README.md", readme)
 
+import os
+
+let params = commandLineParams()
+var prefixapi = "prefixapi" in params
+
 if dirExists("src"):
   for kind, file in walkDir("src"):
     if kind == pcFile and file.endsWith(".nim"):
       scanNimFile(file)
 
-  genMarkDownFile()
+  genMarkDownFile(prefixapi = prefixapi)
